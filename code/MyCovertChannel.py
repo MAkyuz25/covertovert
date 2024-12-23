@@ -47,7 +47,7 @@ class MyCovertChannel(CovertChannelBase):
         while(True):
 
             try:
-                packet = sniff(prn = self.packet_handler(log_file_name=log_file_name))
+                packet = sniff(prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name))
             except KeyboardInterrupt:
                 break
 
@@ -63,11 +63,14 @@ class MyCovertChannel(CovertChannelBase):
 
         else:
             timeDifferenceMs = (currentTime - timestamp) * 1000 # time difference between two packets in ms
+            print(timeDifferenceMs)
             timestamp = currentTime
             if(timeDifferenceMs > 20):
                 message += "0"
             elif(timeDifferenceMs < 20 and timeDifferenceMs > 10):
                 message += "1"
+            
+            print(message)
 
             if(len(message) == 8):
                 convertedMessage = CovertChannelBase.convert_eight_bits_to_character(message)

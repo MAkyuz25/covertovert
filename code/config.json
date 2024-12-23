@@ -1,5 +1,5 @@
 {
-  "covert_channel_code": "Replace it with the [Code] of chosen covert channel type seen in ODTUClass.",
+  "covert_channel_code": "CTC-IPPB-LLC",
   "send": {
     "parameters": {
       "parameter1": "p1",

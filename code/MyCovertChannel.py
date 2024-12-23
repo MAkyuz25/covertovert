@@ -1,4 +1,8 @@
 from CovertChannelBase import CovertChannelBase
+from scapy.all import sniff
+
+timestamp = 0
+message = ""
 
 class MyCovertChannel(CovertChannelBase):
     """
@@ -16,9 +20,21 @@ class MyCovertChannel(CovertChannelBase):
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
 
-        messageCount = CovertChannelBase.random.randint(2,6)
-        for i in range(messageCount):
-            CovertChannelBase.send(self.generate_random_binary_message_with_logging(log_file_name))        
+        randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
+        for i in range(len(randomMessage)):
+
+            messageCount = CovertChannelBase.random.randint(2,6)
+
+            for j in range(messageCount):
+                CovertChannelBase.send(self.generate_random_binary_message())
+
+            if(randomMessage[i] == '0'):
+
+                CovertChannelBase.sleep_random_time_ms(20,30) # encodes 0
+
+            else:
+
+                CovertChannelBase.sleep_random_time_ms(10,19) # encodes 1
 
         
     def receive(self, parameter1, parameter2, parameter3, log_file_name):
@@ -27,3 +43,40 @@ class MyCovertChannel(CovertChannelBase):
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
         self.log_message("", log_file_name)
+
+        while(True):
+
+            try:
+                packet = sniff(prn = self.packet_handler(log_file_name=log_file_name))
+            except KeyboardInterrupt:
+                break
+
+    def packet_handler(self, packet, log_file_name):
+
+        global timestamp
+        global message
+
+        currentTime = packet.time
+
+        if(timestamp == 0):
+            timestamp = currentTime
+
+        else:
+            timeDifferenceMs = (currentTime - timestamp) * 1000 # time difference between two packets in ms
+            timestamp = currentTime
+            if(timeDifferenceMs > 20):
+                message += "0"
+            elif(timeDifferenceMs < 20 and timeDifferenceMs > 10):
+                message += "1"
+
+            if(len(message) == 8):
+                convertedMessage = CovertChannelBase.convert_eight_bits_to_character(message)
+
+                if(convertedMessage == "."):
+                    raise KeyboardInterrupt
+
+                CovertChannelBase.log_message(convertedMessage, log_file_name=log_file_name)
+
+                message = ""
+            
+        

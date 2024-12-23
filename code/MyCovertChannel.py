@@ -15,7 +15,11 @@ class MyCovertChannel(CovertChannelBase):
         - In this function, you expected to create a random message (using function/s in CovertChannelBase), and send it to the receiver container. Entire sending operations should be handled in this function.
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
-        binary_message = self.generate_random_binary_message_with_logging(log_file_name)
+
+        messageCount = CovertChannelBase.random.randint(2,6)
+        for i in range(messageCount):
+            CovertChannelBase.send(self.generate_random_binary_message_with_logging(log_file_name))        
+
         
     def receive(self, parameter1, parameter2, parameter3, log_file_name):
         """

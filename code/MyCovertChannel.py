@@ -1,5 +1,7 @@
 from CovertChannelBase import CovertChannelBase
+import random
 from scapy.all import sniff
+from scapy.all import Ether, LLC, ARP, Raw
 
 timestamp = 0
 message = ""
@@ -23,18 +25,20 @@ class MyCovertChannel(CovertChannelBase):
         randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
         for i in range(len(randomMessage)):
 
-            messageCount = CovertChannelBase.random.randint(2,6)
+            messageCount = random.randint(2,6)
 
             for j in range(messageCount):
-                CovertChannelBase.send(self.generate_random_binary_message())
+                currentMessage = self.generate_random_message()
+                packet = Ether() / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
+                CovertChannelBase.send(self, packet=packet)
 
             if(randomMessage[i] == '0'):
 
-                CovertChannelBase.sleep_random_time_ms(20,30) # encodes 0
+                CovertChannelBase.sleep_random_time_ms(self, 20,30) # encodes 0
 
             else:
 
-                CovertChannelBase.sleep_random_time_ms(10,19) # encodes 1
+                CovertChannelBase.sleep_random_time_ms(self, 10,19) # encodes 1
 
         
     def receive(self, parameter1, parameter2, parameter3, log_file_name):
@@ -73,12 +77,12 @@ class MyCovertChannel(CovertChannelBase):
             print(message)
 
             if(len(message) == 8):
-                convertedMessage = CovertChannelBase.convert_eight_bits_to_character(message)
+                convertedMessage = CovertChannelBase.convert_eight_bits_to_character(self, message)
 
                 if(convertedMessage == "."):
                     raise KeyboardInterrupt
 
-                CovertChannelBase.log_message(convertedMessage, log_file_name=log_file_name)
+                CovertChannelBase.log_message(self, convertedMessage, log_file_name=log_file_name)
 
                 message = ""
             

@@ -1,7 +1,7 @@
 from CovertChannelBase import CovertChannelBase
 import random
 from scapy.all import sniff
-from scapy.all import Ether, LLC, ARP, Raw
+from scapy.all import Ether, LLC, Raw, IP
 
 timestamp = 0
 message = ""
@@ -29,7 +29,7 @@ class MyCovertChannel(CovertChannelBase):
 
             for j in range(messageCount):
                 currentMessage = self.generate_random_message()
-                packet = Ether() / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
+                packet = Ether() / IP(dst="172.18.0.3") / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
                 CovertChannelBase.send(self, packet=packet)
 
             if(randomMessage[i] == '0'):
@@ -51,7 +51,7 @@ class MyCovertChannel(CovertChannelBase):
         while(True):
 
             try:
-                packet = sniff(prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name))
+                packet = sniff(iface="eth0", prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name), filter="ip src 172.18.0.2")
             except KeyboardInterrupt:
                 break
 

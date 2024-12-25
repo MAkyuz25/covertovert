@@ -24,7 +24,7 @@ class MyCovertChannel(CovertChannelBase):
 
         randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
         for i in range(len(randomMessage)):
-
+            print(randomMessage[i])
             messageCount = random.randint(2,6)
 
             for j in range(messageCount):
@@ -32,14 +32,14 @@ class MyCovertChannel(CovertChannelBase):
                 packet = Ether() / IP(dst="172.18.0.3") / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
                 CovertChannelBase.send(self, packet=packet)
 
-            if(randomMessage[i] == '0'):
-
-                CovertChannelBase.sleep_random_time_ms(self, 20,30) # encodes 0
+            if(randomMessage[i] == '1'):
+              
+                CovertChannelBase.sleep_random_time_ms(self, 800,850) # encodes 0
 
             else:
 
-                CovertChannelBase.sleep_random_time_ms(self, 10,19) # encodes 1
-
+                CovertChannelBase.sleep_random_time_ms(self, 1010,1100) # encodes 1
+            
         
     def receive(self, parameter1, parameter2, parameter3, log_file_name):
         """
@@ -59,22 +59,27 @@ class MyCovertChannel(CovertChannelBase):
 
         global timestamp
         global message
-
         currentTime = packet.time
-
         if(timestamp == 0):
             timestamp = currentTime
 
         else:
-            timeDifferenceMs = (currentTime - timestamp) * 1000 # time difference between two packets in ms
-            print(timeDifferenceMs)
-            timestamp = currentTime
-            if(timeDifferenceMs > 20):
-                message += "0"
-            elif(timeDifferenceMs < 20 and timeDifferenceMs > 10):
-                message += "1"
             
-            print(message)
+            timeDifferenceMs = (currentTime - timestamp) * 1000 # time difference between two packets in ms
+            #print(f" Time differences between single packets: {timeDifferenceMs}" )
+            timestamp = currentTime
+            if(timeDifferenceMs > 1000):
+                print(timeDifferenceMs)
+                
+                message += "0"
+                print(message)
+            elif(timeDifferenceMs < 1000 and timeDifferenceMs > 800):
+                print(timeDifferenceMs)
+                
+                message += "1"
+                print(message)
+            
+            
 
             if(len(message) == 8):
                 convertedMessage = CovertChannelBase.convert_eight_bits_to_character(self, message)

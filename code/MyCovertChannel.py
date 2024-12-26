@@ -30,38 +30,25 @@ class MyCovertChannel(CovertChannelBase):
         len_of_randomMessage = len(randomMessage)
         for i in range(len_of_randomMessage):
             
-            start_time = time.time()
-            messageCount = random.randint(3,3)
+            messageCount = random.randint(2,6)
 
             for j in range(messageCount):
-                gen_start = time.time()
                 
                 currentMessage = self.generate_random_message()
-                gen_end = time.time()
-                print(f"Time to generate message: {(gen_end - gen_start) * 1000:.2f} ms")
                 # Create and send packet
-                packet_start = time.time()
                 packet = Ether() / IP(dst="172.18.0.3") / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
                 CovertChannelBase.send(self, packet=packet)
-                packet_end = time.time()
-                print(f"Time to create and send packet: {(packet_end - packet_start) * 1000:.2f} ms")
 
-            sleep_start = time.time()
             if(i == len_of_randomMessage-1):
                 break
             elif(randomMessage[i] == '1'):
               
-                CovertChannelBase.sleep_random_time_ms(self, 800,850) # encodes 1
+                CovertChannelBase.sleep_random_time_ms(self, 200,300) # encodes 1
                 
 
             else:
 
-                CovertChannelBase.sleep_random_time_ms(self, 1350,1450) # encodes 0
-            sleep_end = time.time()
-            print(f"Time spent sleeping: {(sleep_end - sleep_start) * 1000:.2f} ms")
-            end_time = time.time()
-            elapsed_time_ms = (end_time - start_time) * 1000
-            print(f"Bit {randomMessage[i]} sent, Actual time elapsed: {elapsed_time_ms} ms")    
+                CovertChannelBase.sleep_random_time_ms(self, 500,550) # encodes 0
             
     def stop_sniffing(packet):
         global lastconvertedMessage
@@ -72,18 +59,14 @@ class MyCovertChannel(CovertChannelBase):
         - In this function, you are expected to receive and decode the transferred message. Because there are many types of covert channels, the receiver implementation depends on the chosen covert channel type, and you may not need to use the functions in CovertChannelBase.
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
-        self.log_message("", log_file_name)
         global lastconvertedMessage
         
-        while(True):
-
-            try:
-                packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name), filter="ip src 172.18.0.2")
-                if(lastconvertedMessage == "."):
-                    break
-            except KeyboardInterrupt:
-                break
+        packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name), filter="ip src 172.18.0.2", stop_filter= lambda packet: self.stop_sniff(packet))
         CovertChannelBase.log_message(self, lastmessage, log_file_name=log_file_name)
+
+    def stop_sniff(self, packet):
+        global lastconvertedMessage
+        return lastconvertedMessage == "."  # Stop sniffing when the message ends with "."
 
     def packet_handler(self, packet, log_file_name):
 
@@ -99,15 +82,14 @@ class MyCovertChannel(CovertChannelBase):
 
         else:
             
-            timeDifferenceMs = (currentTime - timestamp) * 1000 # time difference between two packets in ms
-            print(f" Time differences between single packets: {timeDifferenceMs}" )
+            timeDifferenceMs = (currentTime - timestamp) * 1000
             timestamp = currentTime
-            if(timeDifferenceMs >= 1250):
+            if(timeDifferenceMs >= 500):
                 
                 
                 message += "0"
                 
-            elif(timeDifferenceMs < 1250 and timeDifferenceMs >= 800):
+            elif(timeDifferenceMs < 500 and timeDifferenceMs >= 200):
                 message += "1"
 
 
@@ -116,11 +98,8 @@ class MyCovertChannel(CovertChannelBase):
                 convertedMessage = CovertChannelBase.convert_eight_bits_to_character(self, message)
                 message =""
                 lastmessage = lastmessage +convertedMessage
-                print("Last Message : " +lastmessage)
-                print("In creating convertedmessage : " + convertedMessage)
 
                 lastconvertedMessage =convertedMessage
                 convertedMessage =""
-                message = ""
             
         

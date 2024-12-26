@@ -59,7 +59,7 @@ class MyCovertChannel(CovertChannelBase):
         global lastconvertedMessage
         return lastconvertedMessage =="."
         
-    def receive(self, log_file_name,max_wait=400, min_wait =200):
+    def receive(self, log_file_name,min_wait=200, max_wait =400):
         """
         - In this function, you are expected to receive and decode the transferred message. Because there are many types of covert channels, the receiver implementation depends on the chosen covert channel type, and you may not need to use the functions in CovertChannelBase.
         - After the implementation, please rewrite this comment part to explain your code basically.

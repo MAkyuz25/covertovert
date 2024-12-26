@@ -19,18 +19,23 @@ class MyCovertChannel(CovertChannelBase):
         - You can edit __init__.
         """
         pass
-    def send(self, log_file_name, parameter1, parameter2):
+    def send(self, log_file_name, min_packet_number = 2, max_packet_number =6, min_sleep_for_0 =200, max_sleep_for_0 = 250, min_sleep_for_1 =400, max_sleep_for_1 = 500):
         """
         - In this function, you expected to create a random message (using function/s in CovertChannelBase), and send it to the receiver container. Entire sending operations should be handled in this function.
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
-
+        assert 0<min_packet_number
+        assert min_packet_number<= max_packet_number
+        assert 200<=min_sleep_for_0
+        assert min_sleep_for_0<=max_sleep_for_0
+        assert 400<=min_sleep_for_1
+        assert min_sleep_for_1<= max_sleep_for_1
         randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
         randomMessage += "0"
         len_of_randomMessage = len(randomMessage)
         for i in range(len_of_randomMessage):
             
-            messageCount = random.randint(2,6)
+            messageCount = random.randint(min_packet_number,max_packet_number)
 
             for j in range(messageCount):
                 
@@ -43,32 +48,33 @@ class MyCovertChannel(CovertChannelBase):
                 break
             elif(randomMessage[i] == '1'):
               
-                CovertChannelBase.sleep_random_time_ms(self, 200,300) # encodes 1
+                CovertChannelBase.sleep_random_time_ms(self, min_sleep_for_0,max_sleep_for_0) # encodes 1
                 
 
             else:
 
-                CovertChannelBase.sleep_random_time_ms(self, 500,550) # encodes 0
+                CovertChannelBase.sleep_random_time_ms(self, min_sleep_for_1,max_sleep_for_1) # encodes 0
             
     def stop_sniffing(packet):
         global lastconvertedMessage
         return lastconvertedMessage =="."
         
-    def receive(self, parameter1, parameter2, parameter3, log_file_name):
+    def receive(self, log_file_name,max_wait=400, min_wait =200):
         """
         - In this function, you are expected to receive and decode the transferred message. Because there are many types of covert channels, the receiver implementation depends on the chosen covert channel type, and you may not need to use the functions in CovertChannelBase.
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
         global lastconvertedMessage
-        
-        packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name), filter="ip src 172.18.0.2", stop_filter= lambda packet: self.stop_sniff(packet))
+        assert 200<=min_wait
+        assert min_wait<= max_wait
+        packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, min_wait=min_wait, max_wait=max_wait), filter="ip src 172.18.0.2", stop_filter= lambda packet: self.stop_sniff(packet))
         CovertChannelBase.log_message(self, lastmessage, log_file_name=log_file_name)
 
     def stop_sniff(self, packet):
         global lastconvertedMessage
         return lastconvertedMessage == "."  # Stop sniffing when the message ends with "."
 
-    def packet_handler(self, packet, log_file_name):
+    def packet_handler(self, packet, min_wait, max_wait):
 
         global timestamp
         global message
@@ -84,12 +90,12 @@ class MyCovertChannel(CovertChannelBase):
             
             timeDifferenceMs = (currentTime - timestamp) * 1000
             timestamp = currentTime
-            if(timeDifferenceMs >= 500):
+            if(timeDifferenceMs >= max_wait):
                 
                 
                 message += "0"
                 
-            elif(timeDifferenceMs < 500 and timeDifferenceMs >= 200):
+            elif(timeDifferenceMs < max_wait and timeDifferenceMs >= min_wait):
                 message += "1"
 
 

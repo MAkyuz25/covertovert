@@ -2,8 +2,12 @@
   "covert_channel_code": "CTC-IPPB-LLC",
   "send": {
     "parameters": {
-      "parameter1": "p1",
-      "parameter2": 1234,
+      "min_packet_number": "2",
+      "max_packet_number": 1234,
+      "min_sleep_for_0": 200,
+      "max_sleep_for_0": 250,
+      "min_sleep_for_1": 400,
+      "max_sleep_for_1": 500,
       "log_file_name": "Example_UDPTimingInterarrivalChannelSender.log"
     }
   },

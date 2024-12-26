@@ -62,6 +62,7 @@ class CovertChannelBase:
         - Same as generate_random_binary_message() function with logging option.
         """
         random_message = self.generate_random_message(min_length=min_length, max_length=max_length)
+        print(random_message) #delete this
         random_binary_message = self.convert_string_message_to_binary(message=random_message)
         self.log_message(message=random_message, log_file_name=log_file_name)
         return random_binary_message

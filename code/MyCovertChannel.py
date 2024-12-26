@@ -2,9 +2,12 @@ from CovertChannelBase import CovertChannelBase
 import random
 from scapy.all import sniff
 from scapy.all import Ether, LLC, Raw, IP
+import time
 
 timestamp = 0
 message = ""
+lastconvertedMessage=""
+lastmessage =""
 
 class MyCovertChannel(CovertChannelBase):
     """
@@ -23,23 +26,46 @@ class MyCovertChannel(CovertChannelBase):
         """
 
         randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
-        for i in range(len(randomMessage)):
-            print(randomMessage[i])
-            messageCount = random.randint(2,6)
+        randomMessage += "0"
+        len_of_randomMessage = len(randomMessage)
+        for i in range(len_of_randomMessage):
+            
+            start_time = time.time()
+            messageCount = random.randint(3,3)
 
             for j in range(messageCount):
+                gen_start = time.time()
+                
                 currentMessage = self.generate_random_message()
+                gen_end = time.time()
+                print(f"Time to generate message: {(gen_end - gen_start) * 1000:.2f} ms")
+                # Create and send packet
+                packet_start = time.time()
                 packet = Ether() / IP(dst="172.18.0.3") / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
                 CovertChannelBase.send(self, packet=packet)
+                packet_end = time.time()
+                print(f"Time to create and send packet: {(packet_end - packet_start) * 1000:.2f} ms")
 
-            if(randomMessage[i] == '1'):
+            sleep_start = time.time()
+            if(i == len_of_randomMessage-1):
+                break
+            elif(randomMessage[i] == '1'):
               
-                CovertChannelBase.sleep_random_time_ms(self, 800,850) # encodes 0
+                CovertChannelBase.sleep_random_time_ms(self, 800,850) # encodes 1
+                
 
             else:
 
-                CovertChannelBase.sleep_random_time_ms(self, 1010,1100) # encodes 1
+                CovertChannelBase.sleep_random_time_ms(self, 1350,1450) # encodes 0
+            sleep_end = time.time()
+            print(f"Time spent sleeping: {(sleep_end - sleep_start) * 1000:.2f} ms")
+            end_time = time.time()
+            elapsed_time_ms = (end_time - start_time) * 1000
+            print(f"Bit {randomMessage[i]} sent, Actual time elapsed: {elapsed_time_ms} ms")    
             
+    def stop_sniffing(packet):
+        global lastconvertedMessage
+        return lastconvertedMessage =="."
         
     def receive(self, parameter1, parameter2, parameter3, log_file_name):
         """
@@ -47,48 +73,54 @@ class MyCovertChannel(CovertChannelBase):
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
         self.log_message("", log_file_name)
-
+        global lastconvertedMessage
+        
         while(True):
 
             try:
-                packet = sniff(iface="eth0", prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name), filter="ip src 172.18.0.2")
+                packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, log_file_name=log_file_name), filter="ip src 172.18.0.2")
+                if(lastconvertedMessage == "."):
+                    break
             except KeyboardInterrupt:
                 break
+        CovertChannelBase.log_message(self, lastmessage, log_file_name=log_file_name)
 
     def packet_handler(self, packet, log_file_name):
 
         global timestamp
         global message
+        global lastconvertedMessage
+        global lastmessage
         currentTime = packet.time
+        
+        
         if(timestamp == 0):
             timestamp = currentTime
 
         else:
             
             timeDifferenceMs = (currentTime - timestamp) * 1000 # time difference between two packets in ms
-            #print(f" Time differences between single packets: {timeDifferenceMs}" )
+            print(f" Time differences between single packets: {timeDifferenceMs}" )
             timestamp = currentTime
-            if(timeDifferenceMs > 1000):
-                print(timeDifferenceMs)
+            if(timeDifferenceMs >= 1250):
+                
                 
                 message += "0"
-                print(message)
-            elif(timeDifferenceMs < 1000 and timeDifferenceMs > 800):
-                print(timeDifferenceMs)
                 
+            elif(timeDifferenceMs < 1250 and timeDifferenceMs >= 800):
                 message += "1"
-                print(message)
-            
-            
+
 
             if(len(message) == 8):
+                
                 convertedMessage = CovertChannelBase.convert_eight_bits_to_character(self, message)
+                message =""
+                lastmessage = lastmessage +convertedMessage
+                print("Last Message : " +lastmessage)
+                print("In creating convertedmessage : " + convertedMessage)
 
-                if(convertedMessage == "."):
-                    raise KeyboardInterrupt
-
-                CovertChannelBase.log_message(self, convertedMessage, log_file_name=log_file_name)
-
+                lastconvertedMessage =convertedMessage
+                convertedMessage =""
                 message = ""
             
         

@@ -8,6 +8,7 @@ timestamp = 0
 message = ""
 lastconvertedMessage=""
 lastmessage =""
+first_packet = 0
 
 class MyCovertChannel(CovertChannelBase):
     """
@@ -19,18 +20,19 @@ class MyCovertChannel(CovertChannelBase):
         - You can edit __init__.
         """
         pass
-    def send(self, log_file_name, min_packet_number = 2, max_packet_number =6, min_sleep_for_0 =200, max_sleep_for_0 = 250, min_sleep_for_1 =400, max_sleep_for_1 = 500):
+    def send(self, log_file_name, min_packet_number = 2, max_packet_number =6, min_sleep_for_0 =200, max_sleep_for_0 = 240, min_sleep_for_1 =400, max_sleep_for_1 = 500, max_network_delay =150):
         """
         - In this function, you expected to create a random message (using function/s in CovertChannelBase), and send it to the receiver container. Entire sending operations should be handled in this function.
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
-        assert 0<min_packet_number
+        assert 2<=min_packet_number
         assert min_packet_number<= max_packet_number
         assert 200<=min_sleep_for_0
+        assert max_sleep_for_0 + max_network_delay < min_sleep_for_1
         assert min_sleep_for_0<=max_sleep_for_0
-        assert 400<=min_sleep_for_1
         assert min_sleep_for_1<= max_sleep_for_1
-        randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
+        assert max_network_delay > 120
+        randomMessage = self.generate_random_binary_message_with_logging(log_file_name, min_length=16, max_length=16)
         randomMessage += "0"
         len_of_randomMessage = len(randomMessage)
         for i in range(len_of_randomMessage):
@@ -48,25 +50,26 @@ class MyCovertChannel(CovertChannelBase):
                 break
             elif(randomMessage[i] == '1'):
               
-                CovertChannelBase.sleep_random_time_ms(self, min_sleep_for_0,max_sleep_for_0) # encodes 1
+                CovertChannelBase.sleep_random_time_ms(self, min_sleep_for_1,max_sleep_for_1) # encodes 1
                 
 
             else:
 
-                CovertChannelBase.sleep_random_time_ms(self, min_sleep_for_1,max_sleep_for_1) # encodes 0
+                CovertChannelBase.sleep_random_time_ms(self, min_sleep_for_0,max_sleep_for_0) # encodes 0
             
     def stop_sniffing(packet):
         global lastconvertedMessage
         return lastconvertedMessage =="."
         
-    def receive(self, log_file_name,min_wait=200, max_wait =400):
+    def receive(self, log_file_name, min_wait=200, max_wait =400, max_network_delay = 150):
         """
         - In this function, you are expected to receive and decode the transferred message. Because there are many types of covert channels, the receiver implementation depends on the chosen covert channel type, and you may not need to use the functions in CovertChannelBase.
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
         global lastconvertedMessage
         assert 200<=min_wait
-        assert min_wait<= max_wait
+        assert min_wait + max_network_delay <= max_wait
+        assert max_network_delay > 120
         packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, min_wait=min_wait, max_wait=max_wait), filter="ip src 172.18.0.2", stop_filter= lambda packet: self.stop_sniff(packet))
         CovertChannelBase.log_message(self, lastmessage, log_file_name=log_file_name)
 
@@ -80,32 +83,38 @@ class MyCovertChannel(CovertChannelBase):
         global message
         global lastconvertedMessage
         global lastmessage
+        global first_packet
         currentTime = packet.time
         
-        
-        if(timestamp == 0):
-            timestamp = currentTime
-
-        else:
+        if(first_packet == 0): # to detect the first packet in the network. First packed is ignored since establishing the connection takes too much time,
+                               # and corrupts the encoding
+            first_packet = 1
             
-            timeDifferenceMs = (currentTime - timestamp) * 1000
-            timestamp = currentTime
-            if(timeDifferenceMs >= max_wait):
+        else:
+        
+            if(timestamp == 0):
+                timestamp = currentTime
+
+            else:
                 
-                
-                message += "0"
-                
-            elif(timeDifferenceMs < max_wait and timeDifferenceMs >= min_wait):
-                message += "1"
+                timeDifferenceMs = (currentTime - timestamp) * 1000
+                timestamp = currentTime
+                if(timeDifferenceMs >= max_wait):
+                    
+                    
+                    message += "1"
+                    
+                elif(timeDifferenceMs < max_wait and timeDifferenceMs >= min_wait):
+                    message += "0"
 
 
-            if(len(message) == 8):
-                
-                convertedMessage = CovertChannelBase.convert_eight_bits_to_character(self, message)
-                message =""
-                lastmessage = lastmessage +convertedMessage
+                if(len(message) == 8):
+                    
+                    convertedMessage = CovertChannelBase.convert_eight_bits_to_character(self, message)
+                    message =""
+                    lastmessage = lastmessage +convertedMessage
 
-                lastconvertedMessage =convertedMessage
-                convertedMessage =""
+                    lastconvertedMessage =convertedMessage
+                    convertedMessage =""
             
         

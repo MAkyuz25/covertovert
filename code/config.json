@@ -5,9 +5,10 @@
       "min_packet_number": 2,
       "max_packet_number": 6,
       "min_sleep_for_0": 200,
-      "max_sleep_for_0": 250,
+      "max_sleep_for_0": 240,
       "min_sleep_for_1": 400,
       "max_sleep_for_1": 500,
+      "max_network_delay": 150,
       "log_file_name": "Example_UDPTimingInterarrivalChannelSender.log"
     }
   },
@@ -15,6 +16,7 @@
     "parameters": {
       "min_wait": 200,
       "max_wait": 400,
+      "max_network_delay": 150,
       "log_file_name": "Example_UDPTimingInterarrivalChannelReceiver.log"
     }
   }

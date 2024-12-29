@@ -13,7 +13,7 @@ min_packet_number: minimum number of random packets in a burst. First packed is 
 
 max_packet_number: maximum number of random packets in a burst. It is also asserted that it is greater than or equal to min_packet_number.
 
-min_sleep_for_0: minimum sleep time to wait between packet bursts to encode 0. It is also asserted that it is greater than or equal to 200, since we measured the maximum network delay between packets as 170ms.
+min_sleep_for_0: minimum sleep time to wait between packet bursts to encode 0. It is also asserted that it is greater than or equal to max_network_delay.
 
 max_sleep_for_0: maximum sleep time to wait between packet bursts to encode 0. It is also asserted that it is greater than min_sleep_for_0.
 
@@ -32,3 +32,5 @@ min_wait: minimum time to wait to encode 0. It is asserted to be greater than th
 max_wait: maximum time to wait to encode 0 and 1. If the time difference between packet bursts is greater than this value, we accept it as 1. It is asserted to be greater than the min_wait + max_network_delay to make the assertion that has been established in sender.
 
 log_file_name: file name to log message into.
+
+Covert Channel Capacity: 0.53

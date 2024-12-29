@@ -27,12 +27,12 @@ class MyCovertChannel(CovertChannelBase):
         """
         assert 2<=min_packet_number
         assert min_packet_number<= max_packet_number
-        assert 200<=min_sleep_for_0
+        assert max_network_delay<=min_sleep_for_0
         assert max_sleep_for_0 + max_network_delay < min_sleep_for_1
         assert min_sleep_for_0<=max_sleep_for_0
         assert min_sleep_for_1<= max_sleep_for_1
         assert max_network_delay > 120
-        randomMessage = self.generate_random_binary_message_with_logging(log_file_name, min_length=16, max_length=16)
+        randomMessage = self.generate_random_binary_message_with_logging(log_file_name)
         randomMessage += "0"
         len_of_randomMessage = len(randomMessage)
         for i in range(len_of_randomMessage):
@@ -43,6 +43,7 @@ class MyCovertChannel(CovertChannelBase):
                 
                 currentMessage = self.generate_random_message()
                 # Create and send packet
+
                 packet = Ether() / IP(dst="172.18.0.3") / LLC(dsap=0xAA, ssap=0xAA, ctrl=0x03) / Raw(load=currentMessage)
                 CovertChannelBase.send(self, packet=packet)
 
@@ -67,7 +68,7 @@ class MyCovertChannel(CovertChannelBase):
         - After the implementation, please rewrite this comment part to explain your code basically.
         """
         global lastconvertedMessage
-        assert 200<=min_wait
+        assert max_network_delay<=min_wait
         assert min_wait + max_network_delay <= max_wait
         assert max_network_delay > 120
         packet = sniff(iface="eth0",prn=lambda packet: self.packet_handler(packet, min_wait=min_wait, max_wait=max_wait), filter="ip src 172.18.0.2", stop_filter= lambda packet: self.stop_sniff(packet))

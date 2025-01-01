@@ -33,4 +33,4 @@ max_wait: maximum time to wait to encode 0 and 1. If the time difference between
 
 log_file_name: file name to log message into.
 
-Covert Channel Capacity: 0.53
+Covert Channel Capacity: 1.88
